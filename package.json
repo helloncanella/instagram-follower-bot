@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/helloncanella/instagram-follower-bot#readme",
   "dependencies": {
+    "esm": "^3.2.22",
     "puppeteer": "^1.15.0"
   }
 }
