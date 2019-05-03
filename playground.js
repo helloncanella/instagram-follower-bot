@@ -4,12 +4,9 @@ import puppeteer from "puppeteer"
   const page = await browser.newPage()
 
   page.once("load", () => console.log("hello"))
-  await page.goto(
-    "https://www.instagram.com/accounts/login/?source=auth_switcher",
-    { waitUntil: "networkidle0" }
-  )
-
-  await page.evaluate(number => console.log(1, 2, { foo: "bar" }, number), 5)
+  await page.goto("https://www.instagram.com/helloncanella/followers/", {
+    waitUntil: "networkidle0"
+  })
 
   const compte = await page.$("input[name='username']")
   await compte.type("helloncanella@gmail.com", { delay: 30 })
@@ -22,9 +19,10 @@ import puppeteer from "puppeteer"
 
   const wait = time => new Promise(resolve => setTimeout(resolve, time))
 
-  page.once("domcontentloaded", async () =>
-    (await page.$(".aOOlW.HoLwm")).click()
-  )
+  page.once("domcontentloaded", async () => {
+    const o = await page.$(".aOOlW.HoLwm")
+    o && o.click()
+  })
 
   // ;().click()
 
