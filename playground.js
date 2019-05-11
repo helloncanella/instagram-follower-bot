@@ -3,7 +3,48 @@ import puppeteer from "puppeteer"
   const browser = await puppeteer.launch({ headless: false })
   const page = await browser.newPage()
 
-  page.once("load", () => console.log("hello"))
+  await login(page)
+
+  await page.goto("https://www.instagram.com/vicrocha.fotografia", {
+    waitUntil: "networkidle0"
+  })
+
+  const followButton = "._0mzm-.sqdOP.L3NKy:not(._8A5w5)"
+
+  await Promise.all([
+    page.waitForSelector(followButton),
+    page.click("a[href='/vicrocha.fotografia/followers/']")
+  ])
+
+  // await Promise.all(
+  //   buttons.map(button => button.click(followButton, { delay: 30 }))
+  // )
+
+  const promiseSerial = funcs =>
+    funcs.reduce(
+      (promise, func) =>
+        promise.then(result =>
+          func().then(Array.prototype.concat.bind(result))
+        ),
+      Promise.resolve([])
+    )
+
+  const buttons = [...(await page.$$(followButton))]
+
+  // convert each url to a function that returns a promise
+  const funcs = buttons.map(button => () =>
+    button.click(followButton, { delay: 30 })
+  )
+
+  // execute Promises in serial
+  promiseSerial(funcs)
+    .then(console.log.bind(console))
+    .catch(console.error.bind(console))
+})()
+
+async function login(page) {
+  page.once("load", () => console.log("loaded"))
+
   await page.goto("https://www.instagram.com/helloncanella/followers/", {
     waitUntil: "networkidle0"
   })
@@ -15,29 +56,11 @@ import puppeteer from "puppeteer"
   await password.type("amadeus1", { delay: 30 })
   ;(await page.$("button[type='submit']")).click()
 
-  // page.once("load", async () =>
-
-  const wait = time => new Promise(resolve => setTimeout(resolve, time))
-
-  page.once("domcontentloaded", async () => {
-    const o = await page.$(".aOOlW.HoLwm")
-    o && o.click()
+  return new Promise(resolve => {
+    page.once("domcontentloaded", async () => {
+      const o = await page.$(".aOOlW.HoLwm")
+      o && o.click()
+      resolve()
+    })
   })
-
-  // ;().click()
-
-  // wait(500)
-
-  // // await input.screenshot({ path: "piu.png" })
-  // console.log("hllo")
-  // // const oi = await page.content()
-
-  // // console.log(oi)
-
-  // // const o = await page.$$eval("div", as => as.map(a => a.textContent))
-
-  // // console.log({ o })
-
-  // console.log("ki")
-  // await browser.close()
-})()
+}
