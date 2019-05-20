@@ -1,7 +1,13 @@
 import puppeteer from "puppeteer"
+
+function wait(ms) {
+  return new Promise(resolve => setTimeout(() => resolve(), ms))
+}
 ;(async () => {
   const browser = await puppeteer.launch({ headless: false })
   const page = await browser.newPage()
+
+  await page.setViewport({ width: 960, height: 768 })
 
   await login(page)
 
@@ -9,37 +15,51 @@ import puppeteer from "puppeteer"
     waitUntil: "networkidle0"
   })
 
-  const followButton = "._0mzm-.sqdOP.L3NKy:not(._8A5w5)"
+  const follower = ".wo9IH"
 
   await Promise.all([
-    page.waitForSelector(followButton),
+    page.waitForSelector(follower),
     page.click("a[href='/vicrocha.fotografia/followers/']")
   ])
 
-  // await Promise.all(
-  //   buttons.map(button => button.click(followButton, { delay: 30 }))
-  // )
+  async function like() {
+    const followButton = "._0mzm-.sqdOP.L3NKy:not(._8A5w5)"
 
-  const promiseSerial = funcs =>
-    funcs.reduce(
-      (promise, func) =>
-        promise.then(result =>
-          func().then(Array.prototype.concat.bind(result))
-        ),
-      Promise.resolve([])
-    )
+    const buttons = [...(await page.$$(followButton))]
 
-  const buttons = [...(await page.$$(followButton))]
+    const funcs = buttons.map(button => async () => {
+      await button.click(followButton, { delay: 100 })
+      await wait(500)
+    })
 
-  // convert each url to a function that returns a promise
-  const funcs = buttons.map(button => () =>
-    button.click(followButton, { delay: 30 })
-  )
+    return await promiseSerial(funcs)
+  }
 
-  // execute Promises in serial
-  promiseSerial(funcs)
-    .then(console.log.bind(console))
-    .catch(console.error.bind(console))
+  await page.exposeFunction("like", like)
+  await page.exposeFunction("wait", like)
+
+  const container = ".isgrP"
+
+  // crypto.createHash('md5').update(text).digest('hex')
+  const a = await page.evaluate(async list => {
+    const isEndOfList = () => {
+      // const { offsetHeight, scrollTop, scrollHeight, clientHeight } = list
+      return list.offsetHeight + list.scrollTop === list.scrollHeight
+    }
+
+    const scrollDown = () => {
+      list.scrollBy(0, list.clientHeight)
+    }
+
+    const liking = async () => {
+      await window.like()
+      scrollDown()
+      await window.wait(200)
+      await liking()
+    }
+
+    await liking()
+  }, await page.$(container))
 })()
 
 async function login(page) {
@@ -49,7 +69,11 @@ async function login(page) {
     waitUntil: "networkidle0"
   })
 
-  const compte = await page.$("input[name='username']")
+  const usernameInput = "input[name='username']"
+
+  await page.waitForSelector(usernameInput)
+
+  const compte = await page.$(usernameInput)
   await compte.type("helloncanella@gmail.com", { delay: 30 })
 
   const password = await page.$("input[name='password']")
@@ -64,3 +88,10 @@ async function login(page) {
     })
   })
 }
+
+const promiseSerial = funcs =>
+  funcs.reduce(
+    (promise, func) =>
+      promise.then(result => func().then(Array.prototype.concat.bind(result))),
+    Promise.resolve([])
+  )
